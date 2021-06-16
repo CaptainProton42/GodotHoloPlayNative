@@ -28,7 +28,8 @@ public:
     enum QuiltPreset {
         LOW_QUALITY, // 24 views
         MEDIUM_QUALITY, // 32 views
-        HIGH_QUALITY // 45 views
+        HIGH_QUALITY, // 45 views
+        VERY_HIGH_QUALITY // 8k
     };
 
 private:
@@ -115,6 +116,8 @@ private:
     float view_cone = 70.0f; // Viewing cone in degrees.
 
     QuiltPreset quilt_preset = QuiltPreset::MEDIUM_QUALITY;
+    int tex_width = 2048;
+    int tex_height = 2048;
     int total_views = 32;
     int num_cols = 4;
     int num_rows = 8;

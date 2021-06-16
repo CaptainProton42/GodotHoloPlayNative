@@ -99,7 +99,7 @@ void HoloPlayVolume::_register_methods() {
     register_property("view_dist", &HoloPlayVolume::set_view_dist, &HoloPlayVolume::get_view_dist, 7.5f);
     register_property("view_cone", &HoloPlayVolume::set_view_cone, &HoloPlayVolume::get_view_cone, 70.0f);
     register_property("size", &HoloPlayVolume::set_size, &HoloPlayVolume::get_size, 1.0f);
-    register_property("quilt_preset", &HoloPlayVolume::set_quilt_preset, &HoloPlayVolume::get_quilt_preset, (int)QuiltPreset::MEDIUM_QUALITY,  GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_DEFAULT, GODOT_PROPERTY_HINT_ENUM, "Low Quality, Medium Quality, High Quality");
+    register_property("quilt_preset", &HoloPlayVolume::set_quilt_preset, &HoloPlayVolume::get_quilt_preset, (int)QuiltPreset::MEDIUM_QUALITY,  GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_DEFAULT, GODOT_PROPERTY_HINT_ENUM, "Low Quality, Medium Quality, High Quality, Very High Quality");
 
     // This needs to be registered for VisualServer::request_frame_drawn_callback but shouldn't be directly called by the user.
     register_method("frame_drawn_callback", &HoloPlayVolume::frame_drawn_callback);
@@ -246,16 +246,29 @@ void HoloPlayVolume::set_quilt_preset(int p_quilt_preset) {
     quilt_preset = (QuiltPreset)p_quilt_preset;
     switch (quilt_preset) {
         case QuiltPreset::LOW_QUALITY:
+            tex_width = 1024;
+            tex_height = 1024;
             total_views = 21;
             num_cols = 3;
             num_rows = 7;
             break;
         case QuiltPreset::MEDIUM_QUALITY:
+            tex_width = 2048;
+            tex_height = 2048;
             total_views = 32;
             num_cols = 4;
             num_rows = 8;
             break;
         case QuiltPreset::HIGH_QUALITY:
+            tex_width = 4096;
+            tex_height = 4096;
+            total_views = 45;
+            num_cols = 5;
+            num_rows = 9;
+            break;
+        case QuiltPreset::VERY_HIGH_QUALITY:
+            tex_width = 8192;
+            tex_height = 8192;
             total_views = 45;
             num_cols = 5;
             num_rows = 9;
@@ -545,10 +558,13 @@ void HoloPlayVolume::render_frame() {
 
     wglMakeCurrent(hdc, hglrc);
 
+    int view_width = tex_width / num_cols;
+    int view_height = tex_height / num_rows;
+
     blit_shader->use();
     blit_shader->setInt("tex", 0);
-    blit_shader->setFloat("width", (GLfloat)screen_w);
-    blit_shader->setFloat("height", (GLfloat)screen_h);
+    blit_shader->setFloat("width", (GLfloat)view_width);
+    blit_shader->setFloat("height", (GLfloat)view_height);
     
     glBindBuffer(GL_ARRAY_BUFFER, tri_vbo);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
@@ -561,33 +577,24 @@ void HoloPlayVolume::render_frame() {
 
     glActiveTexture(GL_TEXTURE0);
 
-    for (int j = 0; j < num_cols; ++j) {
-        for (int i = 0; i < num_rows; ++i) {
-            int view_index = i * num_cols + j;
+    for (int view_index = 0; view_index < total_views; ++view_index) {
+        int x = (view_index % num_cols) * view_width;
+        int y = (view_index / num_cols) * view_height;
 
-            int x = j * screen_w;
-            int y = i * screen_h;
-            glViewport(x, y, screen_w, screen_h);
+        glViewport(x, y, view_width, view_height);
 
-            glEnable(GL_SCISSOR_TEST);
-            glScissor(x, y, screen_w, screen_h);
+        RID view_tex = vs->viewport_get_texture(viewports[view_index]);
+        glBindTexture(GL_TEXTURE_2D, (GLuint)vs->texture_get_texid(view_tex));
+        
+        blit_shader->setFloat("x", (GLfloat)x);
+        blit_shader->setFloat("y", (GLfloat)y);
 
-            RID view_tex = vs->viewport_get_texture(viewports[view_index]);
-            glBindTexture(GL_TEXTURE_2D, (GLuint)vs->texture_get_texid(view_tex));
-            
-            blit_shader->setFloat("x", (GLfloat)x);
-            blit_shader->setFloat("y", (GLfloat)y);
-
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-        }
+        glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind quilt_fbo.
 
     glViewport(0, 0, screen_w, screen_h);
-
-    glDisable(GL_SCISSOR_TEST);
-    glScissor(0, 0, screen_w, screen_h);
 
     // Create light field.
     glBindTexture(GL_TEXTURE_2D, quilt_tex);
@@ -606,7 +613,7 @@ void HoloPlayVolume::create_quilt_tex() {
     glGenTextures(1, &quilt_tex);
     glBindTexture(GL_TEXTURE_2D, quilt_tex);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_w * num_cols, screen_h * num_rows, 0, GL_RGB,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB,
         GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -620,7 +627,7 @@ void HoloPlayVolume::create_quilt_tex() {
 void HoloPlayVolume::update_quilt_tex() {
     if (quilt_tex) {
         glBindTexture(GL_TEXTURE_2D, quilt_tex);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_w * num_cols, screen_h * num_rows, 0, GL_RGB,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB,
                 GL_UNSIGNED_BYTE, NULL);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
