@@ -309,7 +309,7 @@ void HoloPlayVolume::_notification(int what) {
             return;
         }
         glfwSetWindowSize(window, screen_w, screen_h);
-        glfwSetWindowPos(window, win_x, win_y);
+        glfwSetWindowPos(window, win_x+1, win_y+1);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         glfwSetWindowUserPointer(window, (void *)this);
         glfwSetWindowFocusCallback(window, HoloPlayVolume::static_window_focus_callback);
@@ -473,7 +473,7 @@ void HoloPlayVolume::update_device_properties() {
 
     if (window) {
         glfwSetWindowSize(window, screen_w, screen_h);
-        glfwSetWindowPos(window, win_x, win_y);
+        glfwSetWindowPos(window, win_x+1, win_y+1);
     }
 
     // Resize quilt texture.
