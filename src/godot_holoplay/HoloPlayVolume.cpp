@@ -496,11 +496,23 @@ void HoloPlayVolume::create_viewports() {
     viewports.resize(0);
     cameras.resize(0);
 
+    // Projection matrices correlate to viewport size in Godot
+    // so we need to find the smallest viewport size with correct
+    // aspect ratio. This sadly renders some unnecessary pixels :(
+    int view_width = tex_width / num_cols;
+    int view_height = tex_height / num_rows;
+    int view_aspect = view_width / view_height;
+    if (view_aspect > aspect) {
+        view_height = view_width / aspect;
+    } else {
+        view_width = view_height * aspect;
+    }
+
     for (int i = 0; i < total_views; ++i) {
         RID viewport = vs->viewport_create();
         RID camera = vs->camera_create();
 
-        vs->viewport_set_size(viewport, screen_w, screen_h);
+        vs->viewport_set_size(viewport, view_width, view_height);
         vs->viewport_attach_camera(viewport, camera);
         vs->viewport_set_active(viewport, true);
         vs->viewport_set_update_mode(viewport, VisualServer::VIEWPORT_UPDATE_ALWAYS);
