@@ -8,6 +8,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <HoloPlayCore.h>
+
 extern "C" void GDN_EXPORT godot_gdnative_init(godot_gdnative_init_options *o) {
 	godot::Godot::gdnative_init(o);
 }
@@ -33,6 +35,9 @@ extern "C" void GDN_EXPORT godot_nativescript_init(void *p_handle) {
 		ERR_PRINT("Failed to initialize GLAD");
 		return;
 	}
+
+	hpc_client_error errco =
+      hpc_InitializeApp("Godot HoloPlay Plugin", hpc_LICENSE_NONCOMMERCIAL);
 
 	HoloPlayVolume::compile_shaders();
 
