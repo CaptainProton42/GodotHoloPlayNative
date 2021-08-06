@@ -96,8 +96,8 @@ void HoloPlayVolume::_register_methods() {
     register_property("debug_view", &HoloPlayVolume::set_debug_view, &HoloPlayVolume::get_debug_view, false);
     register_property("near_clip", &HoloPlayVolume::set_near_clip, &HoloPlayVolume::get_near_clip, 0.2f);
     register_property("far_clip", &HoloPlayVolume::set_far_clip, &HoloPlayVolume::get_far_clip, 0.5f);
-    register_property("view_dist", &HoloPlayVolume::set_view_dist, &HoloPlayVolume::get_view_dist, 7.5f);
-    register_property("view_cone", &HoloPlayVolume::set_view_cone, &HoloPlayVolume::get_view_cone, 70.0f);
+    register_property("view_dist", &HoloPlayVolume::set_view_dist, &HoloPlayVolume::get_view_dist, 1.0f);
+    register_property("view_cone", &HoloPlayVolume::set_view_cone, &HoloPlayVolume::get_view_cone, 80.0f);
     register_property("size", &HoloPlayVolume::set_size, &HoloPlayVolume::get_size, 1.0f);
     register_property("quilt_preset", &HoloPlayVolume::set_quilt_preset, &HoloPlayVolume::get_quilt_preset, (int)QuiltPreset::MEDIUM_QUALITY,  GODOT_METHOD_RPC_MODE_DISABLED, GODOT_PROPERTY_USAGE_DEFAULT, GODOT_PROPERTY_HINT_ENUM, "Low Quality, Medium Quality, High Quality, Very High Quality");
 
