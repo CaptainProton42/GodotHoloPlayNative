@@ -6,6 +6,8 @@
 #include <Input.hpp>
 #include <Rect2.hpp>
 #include <Spatial.hpp>
+#include <ViewportTexture.hpp>
+#include <Viewport.hpp>
 #include <Math.hpp>
 
 #include <vector>
@@ -113,6 +115,10 @@ private:
     
     std::vector<RID> viewports;
     std::vector<RID> cameras;
+    std::vector<RID> canvas_items; // Texture rects that are used to render to the quilt.
+    RID quilt_canvas; // Canvas for rendering the quilt.
+    RID quilt_viewport; // Viewport that contains the finished quilt.
+    Viewport *quilt_viewport_node;
 
     float view_dist = 1.0f; // Distance between focus plane and viewer.
     float view_cone = 80.0f; // Viewing cone in degrees.
@@ -132,15 +138,13 @@ private:
 
     void create_viewports_and_cameras();
     void update_cameras();
+    void update_quilt_viewport();
     void free_viewports_and_cameras();
     
     void create_window();
     void destroy_window();
     
-    void create_quilt_tex();
-    void update_quilt_tex();
-
-    void render_frame();
+    void render_lightfield();
 
     ////////////
     // Mouse. //
@@ -172,8 +176,6 @@ public:
     void _input(const Ref<InputEvent> event);
 
     void _notification(int what);
-
-    void frame_drawn_callback(int data);
 
     float get_aspect() const;
     Rect2 get_rect() const;
@@ -222,6 +224,8 @@ public:
     Vector3 project_position(Vector2 screen_point, float z_depth) const;
     Vector3 project_ray_normal(Vector2 screen_point) const;
     Vector3 project_ray_origin(Vector2 screen_point) const;
+
+    Ref<ViewportTexture> get_quilt_tex() const;
 };
 
 }
