@@ -114,8 +114,8 @@ private:
     std::vector<RID> viewports;
     std::vector<RID> cameras;
 
-    float view_dist = 7.5f; // Distance between focus plane and viewer.
-    float view_cone = 70.0f; // Viewing cone in degrees.
+    float view_dist = 1.0f; // Distance between focus plane and viewer.
+    float view_cone = 80.0f; // Viewing cone in degrees.
 
     QuiltPreset quilt_preset = QuiltPreset::MEDIUM_QUALITY;
     int tex_width = 2048;
