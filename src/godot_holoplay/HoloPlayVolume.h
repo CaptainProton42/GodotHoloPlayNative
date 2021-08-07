@@ -108,6 +108,8 @@ private:
     
     HDC hdc;
     GLFWwindow* window = nullptr;
+    float scale_x = 1.0;
+    float scale_y = 1.0;
     
     std::vector<RID> viewports;
     std::vector<RID> cameras;
@@ -147,7 +149,9 @@ private:
     static HoloPlayVolume *grabbed_display;
 
     static void static_window_focus_callback(GLFWwindow* window, int focused);
+    static void static_window_content_scale_callback(GLFWwindow* window, float xscale, float yscale);
     void window_focus_callback(bool focused);
+    void window_content_scale_callback(float xscale, float yscale);
 
     Vector2 mouse_pos;
     Input::MouseMode orig_mouse_mode;

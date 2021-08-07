@@ -308,8 +308,11 @@ void HoloPlayVolume::_notification(int what) {
             ERR_PRINT("Could not create GLFW window!");
             return;
         }
-        glfwSetWindowSize(window, screen_w, screen_h);
-        glfwSetWindowPos(window, win_x+1, win_y+1);
+
+        glfwGetWindowContentScale(window, &scale_x, &scale_y);
+        glfwSetWindowContentScaleCallback(window, HoloPlayVolume::static_window_content_scale_callback);
+        glfwSetWindowPos(window, scale_x*win_x+1, scale_y*win_y+1);
+        glfwSetWindowSize(window, scale_x*screen_w, scale_y*screen_h);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         glfwSetWindowUserPointer(window, (void *)this);
         glfwSetWindowFocusCallback(window, HoloPlayVolume::static_window_focus_callback);
@@ -476,8 +479,9 @@ void HoloPlayVolume::update_device_properties() {
     create_viewports_and_cameras();
 
     if (window) {
-        glfwSetWindowSize(window, screen_w, screen_h);
-        glfwSetWindowPos(window, win_x+1, win_y+1);
+        glfwGetWindowContentScale(window, &scale_x, &scale_y);
+        glfwSetWindowPos(window, scale_x*win_x+1, scale_y*win_y+1);
+        glfwSetWindowSize(window, scale_x*screen_w, scale_y*screen_h);
     }
 
     // Resize quilt texture.
@@ -615,7 +619,8 @@ void HoloPlayVolume::render_frame() {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind quilt_fbo.
 
-    glViewport(0, 0, screen_w, screen_h);
+
+    glViewport(0, 0, scale_x*screen_w, scale_y*screen_h);
 
     // Create light field.
     glBindTexture(GL_TEXTURE_2D, quilt_tex);
@@ -659,11 +664,23 @@ void HoloPlayVolume::static_window_focus_callback(GLFWwindow *window, int focuse
     hpv->window_focus_callback((bool)focused); 
 }
 
+void HoloPlayVolume::static_window_content_scale_callback(GLFWwindow* window, float xscale, float yscale) {
+    HoloPlayVolume *hpv = (HoloPlayVolume *)glfwGetWindowUserPointer(window);
+    hpv->window_content_scale_callback(xscale, yscale); 
+}
+
 void HoloPlayVolume::window_focus_callback(bool focused) {
     if (focused) {
         HWND hwnd = (HWND)OS::get_singleton()->get_native_handle(OS::WINDOW_HANDLE);
         SetActiveWindow(hwnd);
     }
+}
+
+void HoloPlayVolume::window_content_scale_callback(float xscale, float yscale) {
+    scale_x = xscale;
+    scale_y = yscale;
+    glfwSetWindowPos(window, scale_x*win_x+1, scale_y*win_y+1);
+    glfwSetWindowSize(window, scale_x*screen_w, scale_y*screen_h);
 }
 
 void HoloPlayVolume::grab_mouse() {
