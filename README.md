@@ -1,9 +1,31 @@
-### ⚠️ Test Release ⚠️
-### More info [here](https://github.com/CaptainProton42/GodotHoloPlayDemo/blob/main/README.md)!
+# GDNative source for HoloPlay for Godot 3.x
+
+This is the GDNative source for the HoloPlay for Godot 3.x plugin.
+
+If you're just looking for the plugin, visit this repository: https://github.com/CaptainProton42/GodotHoloPlay
 
 ## Building from Source
 
-The library can be built using [Scons](https://scons.org/) with the command `scons platform=windows`.
+Clone the repository and initialise all submodules:
+```
+git clone https://github.com/CaptainProton42/GodotHoloPlayNative
+cd GodotHoloPlayNative
+git submodule update --init --recursive
+```
+
+Compile the C++ bindings:
+
+```
+cd godot-cpp
+scons platform=windows generate_bindings=yes -j4
+cd ..
+```
+
+Use [Scons](https://scons.org/) scons to build the DLL:
+
+```
+scons platform=windows
+```
 
 Note that currently only Windows is supported. I used MSVC v142 for compilation, you might need to download the correct GLFW static libraries when using another compiler.
 
