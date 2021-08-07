@@ -128,8 +128,9 @@ private:
 
     bool debug_view = false;
 
-    void create_viewports();
+    void create_viewports_and_cameras();
     void update_cameras();
+    void free_viewports_and_cameras();
     
     void create_window();
     void destroy_window();

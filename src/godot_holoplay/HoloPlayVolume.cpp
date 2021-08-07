@@ -274,7 +274,7 @@ void HoloPlayVolume::set_quilt_preset(int p_quilt_preset) {
             num_rows = 9;
             break;
     }
-    create_viewports();
+    create_viewports_and_cameras();
 
     // Resize quilt texture.
     update_quilt_tex();
@@ -291,7 +291,7 @@ void HoloPlayVolume::_init() {
 void HoloPlayVolume::_notification(int what) {
     if (what == Spatial::NOTIFICATION_ENTER_WORLD) {
         in_world = true;
-        create_viewports();
+        create_viewports_and_cameras();
 
         // Create our GLFW window without a context since we will be re-using
         // Godot's context.
@@ -354,6 +354,10 @@ void HoloPlayVolume::_notification(int what) {
     } else if (what == Spatial::NOTIFICATION_EXIT_WORLD) {
         in_world = false;
         glfwDestroyWindow(window);
+        glDeleteTextures(1, &quilt_tex);
+        glDeleteFramebuffers(1, &quilt_fbo);
+        glDeleteBuffers(1, &tri_vbo);
+        free_viewports_and_cameras();
     } else if (what == Spatial::NOTIFICATION_TRANSFORM_CHANGED) {
         // Update only the camera transforms but not the projections.
         VisualServer *vs = VisualServer::get_singleton();
@@ -469,7 +473,7 @@ void HoloPlayVolume::update_device_properties() {
     // Update the gizmo with the new data.
     update_gizmo();
 
-    create_viewports();
+    create_viewports_and_cameras();
 
     if (window) {
         glfwSetWindowSize(window, screen_w, screen_h);
@@ -480,21 +484,10 @@ void HoloPlayVolume::update_device_properties() {
     update_quilt_tex();
 }
 
-void HoloPlayVolume::create_viewports() {
+void HoloPlayVolume::create_viewports_and_cameras() {
     if (!in_world) return;
 
-    VisualServer *vs = VisualServer::get_singleton();
-    for (int i = 0; i < viewports.size(); ++i) {
-        RID viewport = viewports[i];
-        RID camera = cameras[i];
-
-        vs->viewport_detach(viewport);
-        vs->free_rid(viewport);
-        vs->free_rid(camera);
-    }
-
-    viewports.resize(0);
-    cameras.resize(0);
+    free_viewports_and_cameras();
 
     // Projection matrices correlate to viewport size in Godot
     // so we need to find the smallest viewport size with correct
@@ -508,6 +501,7 @@ void HoloPlayVolume::create_viewports() {
         view_width = view_height * aspect;
     }
 
+    VisualServer *vs = VisualServer::get_singleton();
     for (int i = 0; i < total_views; ++i) {
         RID viewport = vs->viewport_create();
         RID camera = vs->camera_create();
@@ -555,6 +549,21 @@ void HoloPlayVolume::update_cameras() {
             vs->camera_set_environment(camera, RID());
         }
     }
+}
+
+void HoloPlayVolume::free_viewports_and_cameras() {
+    VisualServer *vs = VisualServer::get_singleton();
+    for (int i = 0; i < viewports.size(); ++i) {
+        RID viewport = viewports[i];
+        RID camera = cameras[i];
+
+        vs->viewport_detach(viewport);
+        vs->free_rid(viewport);
+        vs->free_rid(camera);
+    }
+
+    viewports.resize(0);
+    cameras.resize(0);
 }
 
 void HoloPlayVolume::frame_drawn_callback(int data) {
