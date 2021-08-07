@@ -431,21 +431,6 @@ void HoloPlayVolume::update_device_properties() {
         subpixel = 0.0;
     }
 
-    Godot::print("Updated device properties: ");
-    Godot::print("win_x: " +  String::num_int64(win_x));
-    Godot::print("win_y:" + String::num_int64(win_y));
-    Godot::print("screen_w:" + String::num_int64(screen_w));
-    Godot::print("screen_h:" + String::num_int64(screen_h));
-    Godot::print("aspect:" + String::num(aspect));
-    Godot::print("inv_view:" + String::num_int64(inv_view));
-    Godot::print("red_index:" + String::num_int64(red_index));
-    Godot::print("blue_index:" + String::num_int64(blue_index));
-    Godot::print("lent_pitch:" + String::num(lent_pitch));
-    Godot::print("lent_offset:" + String::num(lent_offset));
-    Godot::print("lent_tilt:" + String::num(lent_tilt));
-    Godot::print("fringe:" + String::num(fringe));
-    Godot::print("subpixel:" + String::num(subpixel));
-
     // Update uniforms.
     if (lightfield_shader) {
         lightfield_shader->use();
