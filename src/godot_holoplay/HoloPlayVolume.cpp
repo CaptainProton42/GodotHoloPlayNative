@@ -1,6 +1,5 @@
 #include "HoloPlayVolume.h"
 
-#include <windows.h>
 #undef min
 #undef max
 
@@ -14,7 +13,9 @@
 #include <HoloPlayCore.h>
 #include <HoloPlayShadersOpen.h>
 
+#include <Environment.hpp>
 #include <GlobalConstants.hpp>
+#include <Godot.hpp>
 #include <Input.hpp>
 #include <InputEvent.hpp>
 #include <InputEventMouseMotion.hpp>
@@ -24,7 +25,10 @@
 #include <ProjectSettings.hpp>
 #include <Rect2.hpp>
 #include <RID.hpp>
+#include <Spatial.hpp>
 #include <Transform.hpp>
+#include <Viewport.hpp>
+#include <ViewportTexture.hpp>
 #include <VisualServer.hpp>
 #include <World.hpp>
 
