@@ -14,8 +14,14 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#ifdef WINDOWS
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
+#endif
+#ifdef X11
+#define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_GLX
+#endif
 #include <GLFW/glfw3native.h>
 
 #include "Shader.h"
@@ -107,7 +113,15 @@ private:
 
     bool in_world = false;
     
+    #ifdef WINDOWS
     HDC hdc;
+    #endif
+
+    #ifdef X11
+    Display *x11_display;
+    Window x11_window;
+    #endif
+
     GLFWwindow* window = nullptr;
     float scale_x = 1.0;
     float scale_y = 1.0;

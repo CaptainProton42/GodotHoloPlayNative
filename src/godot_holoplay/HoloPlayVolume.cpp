@@ -6,8 +6,14 @@
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
+#ifdef WINDOWS
 #define GLFW_EXPOSE_NATIVE_WIN32
 #define GLFW_EXPOSE_NATIVE_WGL
+#endif
+#ifdef X11
+#define GLFW_EXPOSE_NATIVE_X11
+#define GLFW_EXPOSE_NATIVE_GLX
+#endif
 #include <GLFW/glfw3native.h>
 
 #include <HoloPlayCore.h>
@@ -319,33 +325,41 @@ void HoloPlayVolume::_notification(int what) {
         glfwSetWindowFocusCallback(window, HoloPlayVolume::static_window_focus_callback);
 
         // Get the windows's device context.
+        #ifdef WINDOWS
         HWND hwnd = glfwGetWin32Window(window);
         hdc = GetDC(hwnd);
-        // Not using async causes issues with Godot.
+        // Not using async causes issues with Godot so we can't use
+        // glfwShowWindow here.
         ShowWindowAsync(hwnd, SW_SHOWNOACTIVATE);
-        //SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_NOACTIVATE);
+        
         if (!hdc) {
             ERR_PRINT("Could not retrieve device context!");
         }
 
         // Set correct pixel format for the device context.
-        HGLRC hglrc = (HGLRC)OS::get_singleton()->get_native_handle(OS::OPENGL_CONTEXT);
         HDC hdc_gd = (HDC)OS::get_singleton()->get_native_handle(OS::WINDOW_VIEW);
 
         PIXELFORMATDESCRIPTOR ppfd;
         int pxf = GetPixelFormat(hdc_gd);
         SetPixelFormat(hdc, pxf, &ppfd);
+        #endif
+
+        #ifdef X11
+        x11_display = glfwGetX11Display();
+        x11_window = glfwGetX11Window(window);
+        glfwShowWindow(window);
+        #endif
 
         // Create quilt canvas and viewport.
         VisualServer *vs = VisualServer::get_singleton();
         quilt_viewport_node = Viewport::_new();
+        quilt_viewport_node->set_vflip(true);
         quilt_viewport = quilt_viewport_node->get_viewport_rid();
         vs->viewport_set_active(quilt_viewport, true);
         vs->viewport_set_update_mode(quilt_viewport, VisualServer::VIEWPORT_UPDATE_ALWAYS);
         vs->viewport_set_usage(quilt_viewport, VisualServer::VIEWPORT_USAGE_2D);
         quilt_canvas = vs->canvas_create();
         vs->viewport_attach_canvas(quilt_viewport, quilt_canvas);
-        vs->viewport_set_vflip(quilt_viewport, true);
         update_quilt_viewport();
         create_viewports_and_cameras();
 
@@ -382,6 +396,7 @@ void HoloPlayVolume::_notification(int what) {
 void HoloPlayVolume::_process(float delta) {
     render_lightfield();
 
+    #ifdef WINDOW
     if (wait_for_active) {
         HWND hwnd = (HWND)godot::OS::get_singleton()->get_native_handle(godot::OS::WINDOW_HANDLE);
         SetActiveWindow(hwnd);
@@ -389,6 +404,7 @@ void HoloPlayVolume::_process(float delta) {
             wait_for_active = false;
         }
     }
+    #endif
 }
 
 void HoloPlayVolume::update_device_properties() {
@@ -565,13 +581,23 @@ void HoloPlayVolume::free_viewports_and_cameras() {
 }
 
 void HoloPlayVolume::render_lightfield() {
+    #ifdef WINDOWS
     if (!hdc) return;
     VisualServer *vs = VisualServer::get_singleton();
-
     HGLRC hglrc = (HGLRC)OS::get_singleton()->get_native_handle(OS::OPENGL_CONTEXT);
     HDC hdc_gd = (HDC)OS::get_singleton()->get_native_handle(OS::WINDOW_VIEW);
-
     wglMakeCurrent(hdc, hglrc);
+    #endif
+
+    #ifdef X11
+    if (!x11_window) return;
+    VisualServer *vs = VisualServer::get_singleton();
+    GLXContext ctx = (GLXContext)OS::get_singleton()->get_native_handle(OS::OPENGL_CONTEXT);
+    Window x11_window_gd = (Window)OS::get_singleton()->get_native_handle(OS::WINDOW_HANDLE);
+    Display *x11_display_gd = (Display *)OS::get_singleton()->get_native_handle(OS::DISPLAY_HANDLE);
+    glXMakeCurrent(x11_display, x11_window, ctx);
+    #endif
+
     
     glBindBuffer(GL_ARRAY_BUFFER, tri_vbo);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
@@ -591,9 +617,16 @@ void HoloPlayVolume::render_lightfield() {
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
-    SwapBuffers(hdc);
     
+    #ifdef WINDOWS
+    SwapBuffers(hdc);
     wglMakeCurrent(hdc_gd, hglrc); // Move context back to main window.
+    #endif
+
+    #ifdef X11
+    glXSwapBuffers(x11_display, x11_window);
+    glXMakeCurrent(x11_display, x11_window, ctx);
+    #endif
 }
 
 void HoloPlayVolume::update_quilt_viewport() {
@@ -614,10 +647,12 @@ void HoloPlayVolume::static_window_content_scale_callback(GLFWwindow* window, fl
 }
 
 void HoloPlayVolume::window_focus_callback(bool focused) {
+    #ifdef WINDOWS
     if (focused) {
         HWND hwnd = (HWND)OS::get_singleton()->get_native_handle(OS::WINDOW_HANDLE);
         SetActiveWindow(hwnd);
     }
+    #endif
 }
 
 void HoloPlayVolume::window_content_scale_callback(float xscale, float yscale) {
