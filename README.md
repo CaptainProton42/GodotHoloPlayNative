@@ -31,6 +31,8 @@ Note that currently only Windows is supported. I used MSVC v142 for compilation,
 
 After compilation, the library will be placed at `build/libgdholoplay.dll` (you might need to create the directory before compiling). Clone the [plugin repository](https://github.com/CaptainProton42/GodotHoloPlay) and place the `.dll` file in `addons/holoplay/bin/win64` to test your changes.
 
+**Don't forget to add `target=release` to all `scons` commands when you build the final product!** *(Not that I did that or anything...)*
+
 ## License
 
 The plugin source is available under the [MIT license](LICENSE.md).
